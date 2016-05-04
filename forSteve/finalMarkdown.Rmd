@@ -35,7 +35,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-setwd("C:/Users/Sars/Documents/Spring 2016/Software Engineering/Project/BattleAPI")
+# setwd("C:/Users/Sars/Documents/Spring 2016/Software Engineering/Project/BattleAPI")
 knitr::opts_chunk$set(message=F,warning=F)
 library(jsonlite)
 library(dplyr)
@@ -46,9 +46,9 @@ library(splitstackshape)
 library(printr)
 
 ## Three datasets that I received from the API (loading them to save my API calls)
-load("top1000.RData")
-load("heroItems.RData")
-load("itemData.RData")
+load("data/top1000.RData")
+load("data/heroItems.RData")
+load("data/itemData.RData")
 ```
 <hr>
 
@@ -457,7 +457,7 @@ save(r1)
 * What are the unique sets that players are using? Does it differ between the top 1000 and the top 100? *
 
 
-```{r, echo=T, results='asis',comment=NA}
+```{r, eval=F, echo=T, results='asis',comment=NA}
 library(rCharts)
 
 
