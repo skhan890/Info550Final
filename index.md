@@ -114,23 +114,23 @@ You can pick 1 of 6 classes:
 
 # My question...
 
-![](pics/sara.jpg)
+![](pics/sara.png)
 
 
 ---
 
 # The answers...
-![](pics/answer.JPG)
+![](pics/answer.png)
 
 ---
 
 # The answers...
-![](pics/answer2.JPG)
+![](pics/answer2.png)
 
 ---
 
 # The answers...
-![](pics/answer3.JPG)
+![](pics/answer3.png)
 
 ---
 
@@ -144,7 +144,7 @@ You can pick 1 of 6 classes:
 
 ### What is a player statistic?
 
-![](pics/stat.jpg)
+![](pics/stat.png)
 
 ---
 
@@ -431,5 +431,5 @@ Thanks!
 Questions?
 <br>
 
-
+  
 
