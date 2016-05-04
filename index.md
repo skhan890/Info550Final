@@ -110,11 +110,11 @@ You can pick 1 of 6 classes:
 
 ## So I decided to ask the Diablo 3 Community what questions they'd like answered from the API.
 
----
+<!-- --- -->
 
-# My question...
+<!-- # My question... -->
 
-![](pics/sara.png)
+<!-- ![](pics/sara.png) -->
 
 
 ---
@@ -140,20 +140,20 @@ You can pick 1 of 6 classes:
 <br>
 ## 1. Does the rank of a person correspond to any player statistic?
 
+<!-- --- -->
+
+<!-- ### What is a player statistic? -->
+
+<!-- ![](pics/stat.png) -->
+
 ---
 
-### What is a player statistic?
 
-![](pics/stat.png)
-
----
-
-
-Again, the queston: 
-<br>
-<br>
-Does the rank of a person correspond to any player statistic?
-<hr>
+<!-- Again, the queston:  -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- Does the rank of a person correspond to any player statistic? -->
+<!-- <hr> -->
 
 To answer that, I created an interactive polychart.js graphic with "dat.gui" (angularJS) controls built in.
 
