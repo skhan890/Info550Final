@@ -128,7 +128,7 @@ You can pick 1 of 6 classes:
 
 # My question...
 
-![](pics/sara.jpg)
+![](pics/sara.png)
 
 
 ---
@@ -158,7 +158,7 @@ You can pick 1 of 6 classes:
 
 ### What is a player statistic?
 
-![](pics/stat.jpg)
+![](pics/stat.png)
 
 ---
 
