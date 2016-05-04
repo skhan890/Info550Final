@@ -1,3 +1,7 @@
 Final project for INFO 550 
-:fire: :fire: :fire:
+<br>
+<hr>
 A project by Sara Khan
+<br>
+
+:cat2:
