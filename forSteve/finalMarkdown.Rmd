@@ -1,0 +1,484 @@
+---
+date: "April 30, 2016"
+output:
+  html_document: 
+    theme: cerulean
+    highlight: tango
+---
+
+![](pics/HEADER.png)
+
+<center><h1>Diablo 3 - Season 6</center></h5>
+<center><h3>INFO 550 Final Project </center></h3>
+<center><h4>*Sara Khan*</center></h4>
+<hr>
+
+<div class="alert alert-info">
+
+####**Table of Contents**
+**Part 1: The Introduction**
+<ul>
+<li><a href="#rsrch">The Research Questions</a></li>
+</ul>
+**Part 2: Methods**
+<ul>
+<li><a href="#bliz">Getting some sweet data!</a></li>
+</ul>
+**Part 3: Results**
+<ul>
+<li><a href="#gt">Graphics</a></li>
+</ul>
+
+</h3>
+
+</div>
+
+
+```{r setup, include=FALSE}
+setwd("C:/Users/Sars/Documents/Spring 2016/Software Engineering/Project/BattleAPI")
+knitr::opts_chunk$set(message=F,warning=F)
+library(jsonlite)
+library(dplyr)
+library(plyr)
+library(rCharts)
+library(tidyr)
+library(splitstackshape)
+library(printr)
+
+## Three datasets that I received from the API (loading them to save my API calls)
+load("top1000.RData")
+load("heroItems.RData")
+load("itemData.RData")
+```
+<hr>
+
+<div id="rsrch"></div>
+<center><h4></center></h4>
+
+<div class="panel panel-default">
+  <div class="panel-heading">Research Questions</div>
+  
+  
+  <div class="panel-body">1. Are there any player statistic that correlates to the player rank?<br>
+                          2. What item sets do most players use at the top of the leaderboard?
+                          
+  </div>
+ 
+<div id="bliz"></div>
+<div class="panel panel-default">
+  <div class="panel-heading">Data cleaning</div>
+  <div class="panel-body">
+#####Part A. Getting data.
+
+Let's get some data. I'm querying the first 1000 people on the leaderboard for season 6.
+
+First, I built an access string to query data from the BattleNet API. I redacted my actual APP/KEY.
+
+I saved the results into an "RData" dataset called "top1000"
+
+```{r cars, eval=F}
+
+## build an access string 
+SARAKEY<-"SARA'S-UNIQUE-KEY"
+url<-paste0("https://us.api.battle.net/data/d3/season/6/leaderboard/achievement-points?access_token=",SARAKEY)
+
+## Saving the actual API
+top1000<-fromJSON(url)
+
+
+```
+
+
+<hr>
+#####Part B.
+
+Now I'll create a function that cleans up the data from the JSON format into a usable data frame.
+
+This is a function that pulls out the top 1000 user names and their hero ID. This will allow me to query data to create unique URLs from the Battlenet API for later. I'm also saving the Hero Class for later.
+```{r}
+
+results <- plyr::ldply(1:1000, function(i) {
+
+  tempHero<-(top1000$row$player[[i]])$data[[1]] %>%
+    filter(id %in% c("HeroBattleTag","HeroClass","HeroId"))  %>%
+    select(string,number)
+
+ (c(i,tempHero[1,1],tempHero[3,2],tempHero[2,1]))
+})
+
+colnames(results)<-c("Rank","HeroBattleTag","HeroId","HeroClass")
+
+head(results)
+```
+
+<hr>
+<div id="data"></div>
+<center><h4></center></h4>
+I used "ldply" to retrieve the results into a data frame. I found the "list" to be overkill for what I was trying to do, because I only wanted a simple data frame with the unique "Username" aka HeroBattleTag, with the username's "Hero" aka HeroId for the first 1000 in the leaderboard.
+
+#####Part C. Weirdness.
+
+Now I'm going to create unique URLs from the "results" data frame to query data for the API.
+
+
+While exploring the "results" data frame, I noticed some weird usernames...
+```{r, echo=F}
+results[30:40,]
+```
+
+
+Notice the odd unicode characters in Rank 31 and 36?
+```{r, echo=F}
+results[31,]
+
+results[36,]
+```
+
+I wondered if it would impact my ability to query data from the API. I tested it into a URL like so and got an error.
+
+```{r, eval=F}
+fromJSON(paste0("https://us.api.battle.net/d3/profile/<U+904A><U+4FE0>%233113/hero/69485497?locale=en_US&apikey=",key))
+```
+
+I kept getting errors. I decided to get into the matter further, and found that the unicode listing actually appeared within the dataframe.
+
+Example: when I queried the data out of the dataset by specifying the actual username, I would get the correct output, like so: 
+
+"斷罪之誓%3656"
+"遊俠%3291"
+
+```{r, eval=F}
+fromJSON(paste0("https://us.api.battle.net/d3/profile/<U+904A><U+4FE0>%233113/hero/69485497?locale=en_US&apikey=",key))
+```
+
+Now that I figured out the unicode issue, I'll now create unique URLs to get data back from the API.
+
+```{r, eval=F}
+heroItemURL <- lapply(1:1000, function(i) {
+  
+  paste0("https://us.api.battle.net/d3/profile/",
+         results$HeroBattleTag[i],
+         "/hero/",
+         results$HeroId[i],
+         "?locale=en_US&apikey=",
+         key)
+})
+
+```
+To be safe, I created a function to only make URLS first. Then I'll wrap them into a "fromJSON" function.
+
+This would give me urls as so:
+
+"https://us.api.battle.net/d3/profile/流星追月#3113/hero/69485497?locale=en_US&apikey=SARAKEY"
+
+However, I kept getting error messages from the API. This led me to check the URL correctly...
+
+```{r}
+actualURL<-("https://us.api.battle.net/d3/profile/流星追月%233113/hero/69485497?locale=en_US&apikey=SARAKEY")
+
+
+testURL<-paste0("https://us.api.battle.net/d3/profile/",
+                results$HeroBattleTag[965],
+                "/hero/",
+                results$HeroId[965],
+                "?locale=en_US&apikey=",
+                "key")
+
+identical(testURL,actualURL)
+
+```
+
+Why was I getting a FALSE url for the identical function? I looked closer, and found that I needed to sub out the "#" for a "%" and add a "23" before the HeroId.
+
+
+```{r}
+results$HeroBattleTag<-gsub("#","%23", results$HeroBattleTag)
+```
+
+Now that the URL should be correct, let's test it again.
+
+```{r}
+actualURL<-("https://us.api.battle.net/d3/profile/流星追月%233113/hero/69485497?locale=en_US&apikey=SARAKEY")
+
+
+testURL<-paste0("https://us.api.battle.net/d3/profile/",
+                results$HeroBattleTag[965],
+                "/hero/",
+                results$HeroId[965],
+                "?locale=en_US&apikey=",
+                "key")
+
+identical(testURL,actualURL)
+
+```
+
+A true statement! Great. That means we can finally grab all the URLs from the API.
+
+
+```{r,eval=F}
+heroItems<-lapply(1:1000, function(i) {
+  fromJSON(heroItemURL[[i]])
+})
+
+head(heroItems[[965]])
+```
+
+
+```{r, echo=F}
+head(heroItems[[965]])
+```
+
+Looks like it worked. I now have all 1000 players! I went ahead and saved the output to save my API calls.
+
+```{r, echo=T,eval=F}
+save(heroItems,file="heroItems.RData")
+```
+ </div>
+</div>
+<br>
+<hr>
+####Step 2
+
+Now let's see what kind of interesting data is in the "heroItems" dataset. I know it is a list of 1000 elements. Each element corresponds to the person in order of rank. For example, heroItem[[1]] would bring up the data for the first person on the leaderboard.
+```{r, echo=T}
+summary(heroItems[[1]])
+```
+
+
+What I'm interested in is the "statistics" of the player. For example, this will answer the question based on the differences in damage by the rank of the player. 
+
+```{r,echo=F}
+top1000Stats<- lapply(1:1000, function(i) {
+  as.character(t(as.data.frame(heroItems[[i]]["stats"])))
+})
+
+heroStats<-do.call(rbind.data.frame, top1000Stats) # coercing the character into a data frame
+heroStats<-cbind(heroStats,1:1000,results$HeroClass) #adding the rank (1:1000) and the class of the hero
+colnames(heroStats)<-c(names(heroItems[[1]]["stats"]$stats),"Rank","HeroClass") #
+
+
+```
+
+
+<hr>
+
+<br>
+<hr>
+####Step 3
+
+Let's start to clean up the data and put it in a usable format to look at unique items that people use.
+
+I'd like a data frame that has usable information in a format like so:
+
+Hypothethical list of the `r length(unique(results$HeroClass))` classes:
+Demon Hunter
+- Name of combo-set
+- Number of people from top 1000 with set
+- Number of people from top 100 with set
+Wizard
+- Name of combo-set
+- Number of people from top 1000 with set
+- Number of people from top 100 with set
+.... etc
+
+From that, I'll be able to create charts and a queryable application for people to look at the top sets used for each person.
+
+
+```{r, echo=T}
+summary(heroItems[[1]]$items)
+```
+
+So it's yet another list of other lists. That's fine - I only will need the names of the items, like so:
+
+```{r, echo=T}
+heroItems[[1]]$items$torso$name
+heroItems[[4]]$items$torso$name
+```
+
+Another way I'll need to subset the unique users is by their class. For example, you can pick one of the `r length(unique(results$HeroClass))` following classes:
+
+```{r, echo=T}
+(unique(results$HeroClass))
+```
+<hr>
+
+#####Part A
+
+First. I'll have to use the "heroItems" list and extract within the nested list of nested lists to find the unique sets that each player has.
+
+```{r,eval=T}
+
+setItems<- lapply(1:1000, function(i) {
+  (heroItems[[i]]["items"][[1]][1][[1]]["setItemsEquipped"][[1]])
+})
+
+```
+
+Now that I pulled out the unique set items, I can further clean and process the data to create a data frame that contains
+
+      - the rank
+      - hero class
+      - the unique combination of set items
+      
+```{r,eval=T}
+uniqueSetItems <- plyr::ldply(1:1000, function(i) {
+return(c(i,  # Rank of player
+         results$HeroClass[i],   # class of player
+         paste(setItems[[i]], sep=" ", collapse=",") # Set Item: squish the set items into one vector
+         ) 
+      )
+})
+
+# setting the column names to the data frame
+colnames(uniqueSetItems)<-c("rank","class","uniqueSet")
+
+```
+
+Great! Now that it's in a usable format, let's look at the unique number of cominbations that people are using in the game from the top 1000 players.
+
+It looks like there are only `r length(unique(uniqueSetItems$uniqueSet))` unique sets out of 1000. Not bad. Out of 6 classes, that means there must be some uniqueness to the combination of sets people are using to get into the top 1000.
+
+
+<hr>
+#####Part B.
+
+Now, we need to get the number of unique items in the set.
+
+```{r,}
+######################################################## have to grab unique items from the "uniqueSets"
+# First I'm splitting the "uniqueSet" string by the commas to grab unique items
+# then I'm unlisting the items to get a character object of all the unique items
+# then i'm looking at the unique values
+# then turning that into a usable matrix
+uniqueItems<-as.matrix(unique(unlist(strsplit(uniqueSetItems$uniqueSet,","))))
+
+# getting rid of any NA values
+uniqueItems<-uniqueItems[!uniqueItems[,1] == "NA", ]
+
+head(uniqueItems)
+```
+
+Next, we're going to use the API again to query back details about the items from BattleNet's API.
+
+First, I create a function to paste together URLs that will be used to get the JSON data back from...
+```{r, eval=F}
+
+itemURLs <- lapply(1:144, function(i) {
+
+  paste0("https://us.api.battle.net/d3/data/item/",
+         uniqueItems[i],
+         "?locale=en_US&apikey=",
+         key)
+})
+```
+
+Next, I use those urls to grab the JSON format back using "fromJSON".
+
+```{r, eval=F}
+
+itemData<-lapply(1:144, function(i) {
+  fromJSON(itemURLs[[i]])
+})
+
+head(itemData[[45]])
+```
+
+```{r, echo=F}
+
+head(itemData[[45]])
+```
+
+Looks great! Now let's join the two data points.
+
+I'm going to now first get the number of unique sets from the uniqueSetItems objects and casting it into a long format to make analysis easier.
+
+```{r}
+
+betterUniqueSetNames<-cSplit(uniqueSetItems, "uniqueSet", sep=",")
+betterUniqueSetNames<-betterUniqueSetNames %>% gather(clothing,itemID,uniqueSet_1:uniqueSet_7)
+```
+
+Next, I'll pull out the unique "set names" that correspond to each item name.
+```{r}
+itemsWithSet<- plyr::ldply(1:144, function(i) {
+  c(itemData[[i]]$id,itemData[[i]]$name,(itemData[[i]]$set$name))
+})
+colnames(itemsWithSet)<-c("itemID","itemName","setName")
+
+```
+
+Finally, I'll do an inner join to link each item that a player has with the set name.
+```{r}
+
+heroSetDataFinal<-inner_join(betterUniqueSetNames,itemsWithSet, by=c("itemID"))
+head(heroSetDataFinal)
+
+```
+
+Now, I want to look at the most frequent sets that each class has. This will help me answer research question 2. 
+
+I'll create a function called "setClean" to loop through the 6 classes and pull out the most frequent sets for each class.
+
+```{r}
+
+setClean<-function(x){
+as.data.frame(xtabs(~ setName + class , x))[!as.data.frame(xtabs(~ setName + class , x))$Freq==0, ]
+}
+
+classSets1000<-setClean(heroSetDataFinal) #all 1000 top players
+classSets100<-setClean(filter(heroSetDataFinal, (rank%in%(1:100)))) #only the top 100 ranked players
+                
+head(classSets1000)       
+```
+
+
+</div>
+
+
+<div id="gt"></div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">Results</div>
+
+  <div class="panel-body">  
+#####Research Question 1.
+
+* What player statistics are correlated to the rank of the player?
+
+```{r, eval=F}
+r1 <- rPlot(damage ~ Rank, data = heroStats, type = 'point', color = 'HeroClass')
+r1$addControls('x', 'rank', names(heroStats))
+save(r1)
+```
+
+
+#####Research Question 2.
+
+* What are the unique sets that players are using? Does it differ between the top 1000 and the top 100? *
+
+
+```{r, echo=T, results='asis',comment=NA}
+library(rCharts)
+
+
+sets1000Plot <- nPlot(
+  Freq ~ class, 
+  group = "setName",
+  data = classSets1000,
+  type= "multiBarChart"
+)
+
+sets100Plot <- nPlot(
+  Freq ~ class, 
+  group = "setName",
+  data = classSets100,
+  type= "multiBarChart"
+)
+
+```
+
+
+</div>
+  
+  
+  
