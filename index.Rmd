@@ -134,17 +134,17 @@ You can pick 1 of 6 classes:
 ---
 
 # The answers...
-![](pics/answer.JPG)
+![](pics/answer.png)
 
 ---
 
 # The answers...
-![](pics/answer2.JPG)
+![](pics/answer2.png)
 
 ---
 
 # The answers...
-![](pics/answer3.JPG)
+![](pics/answer3.png)
 
 ---
 
